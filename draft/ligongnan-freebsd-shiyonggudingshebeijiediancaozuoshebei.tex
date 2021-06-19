@@ -1,0 +1,139 @@
+\chapter{FreeBSD 使用固定设备节点名操作设备}
+
+FreeBSD-6之后，采用devfs管理设备节点，设备名称在设备联机时动态创建，
+增加了灵活性。但也带来另一些问题：一些外部设备，如USB、 PCCard等设
+备并不总是在开机之前就连接到计算机，如果存在相同类型的设备，这些设
+备的在/dev的节点名称会因为设备连接到计算机的先后顺序而发生变化，这
+会给一些应用程序的设置造成一些不便。然而，正是因为devfs的灵活性，
+也带来很好的方法来支持这些外部设备使用固定设备节点名称。
+
+这里通过两台USB接口打印机EPSON Stylus CX3700、Brother FAX-2820的设
+置来说明这一方法。
+
+\section{查看devfs基本配置}
+
+首先，查看/etc/devd.conf文件，确定有关的基本配置情况
+\begin{lstlisting}
+...
+options {
+...
+directory "/etc/devd";
+directory "/usr/local/etc/devd";
+...
+};
+...
+\end{lstlisting}
+得知用户定制配置文件目录为/etc/devd，/usr/local/etc/devd。
+如果没有相应的目录，自行建立就可以了。当然也可以自行修改，
+不过不建议修改。获得设备信息
+
+在编写配置文件之前，需要得到设备的必要参数。可以通过在前
+台运行调试模式的devd来查看。现在不要连接设备，运行
+\begin{lstlisting}
+# /etc/rc.d/devd stop
+# /sbin/devd -Dd
+\end{lstlisting}
+屏幕上会出现一些信息，表明devd已经运行了。这时把设备连接
+到计算机，然后再拔掉设备。这个过程中屏幕会有很多输出，只
+需要查看以Processing event开头信息。以下两行示例是U盘的插
+拔发生的信息。
+\begin{lstlisting}
+Processing event '+umass0 vendor=0x1043 product=0x8012
+devclass=0x00 devsubclass=0x00 release=0x0100 sernum="
+" intclass=0x08 intsubclass=0x06 at port=1 interface=0
+vendor=0x1043 product=0x8012 devclass=0x00 devsubclass
+=0x00 release=0x0100 sernum="" intclass=0x08 intsubcla
+ss=0x06 on uhub1'
+Processing event '-umass0 vendor=0x1043 product=0x8012
+devclass=0x00 devsubclass=0x00 release=0x0100 sernum="
+" intclass=0x08 intsubclass=0x06 at port=1 interface=0 
+vendor=0x1043 product=0x8012 devclass=0x00 devsubclass
+=0x00 release=0x0100 sernum="" intclass=0x08 intsubcla
+ss=0x06 on uhub1'
+\end{lstlisting}
+umass0是devfs为U盘在/dev下自动生成的设备节点，+umass0
+表示umass0连接上计算机了，-umass0表示umass0设备被拔出。
+
+我们需要得到设备信息主要是vendor，product，sernum三个
+参数。vendor是制造商的代码，product是设备型号代码，
+sernum是设备的序列好，这三个参数基本上应该可以确定唯
+一一台设备。
+
+如果没有多于一台同一厂家同一型号（或同一系列，有点厂
+家设备虽然标识的型号不同，但是product值却是一样的）
+的设备，实际应用中 vendor和product也就可以确定不同的
+设备了，这里还是使用sernum来增加确定性。在上面的示例
+中sernum为空，说明有的U盘没有序列号，没有序列号的U盘，
+不能用这三个参数来唯一确定。对于U盘可以通过glabel加标
+签的方法标识不同的U盘，会更方便一些。
+
+获得必要的设备信息之后，就可以在控制台按Ctrl+C退出devd进程。
+
+本例当中的两台USB打印机通过上述方法得到有关参数分别如下：
+\begin{lstlisting}
+EPSON Stylus CX3700   product 0x0818   vendor 0x04b8 
+  sernum L34020604060324210
+Brother FAX-2820      product 0x0187   vendor 0x04f9  
+ sernum 000H5J658204
+\end{lstlisting}
+
+\sectionr{编写配置文件}
+
+得到上述的这些信息之后，就可以动手编写配置文件了，配置文件应该保存在/etc/devd.conf文件中指定的目录下，本例中为/etc/devd/ulpt.conf，内容如下：
+\begin{lstlisting}
+# EPSON Stylus CX3700 printer
+# product  0x0818
+# vendor   0x04b8
+# sernum   L34020604060324210
+# 定义设备连接时的动作。100为优先级，用来控制
+# 配置文件中该设备其他可能动作的先后次序
+attach 100 {                                              
+	# 检测设备名称
+	device-name "ulpt[0-9]+";
+	# 检测product                           
+	match "product"      "0x0818";
+	# 检测vendor
+	match "vendor"       "0x04b8";
+	# 检测sernum
+	match "sernum"       "L34020604060324210";
+	# 如果该设备符合上面三个条件，
+	# 那么就在创建一个指向实际设备名的指定名称连接
+	action "/bin/ln -sf /dev/$device-name /dev/epPRN";   
+};
+
+# Brother FAX-2820 printer
+# product  0x0187
+# vendor   0x04f9
+# sernum   000H5J658204
+
+attach 100 {
+	match "product"      "0x0187";
+	match "vendor"       "0x04f9";
+	match "sernum"       "000H5J658204";
+	action "/bin/ln -sf /dev/$device-name /dev/brPRN";
+};
+
+# For detach USB printer
+detach 100 {
+	# 定义设备拔出时的动作
+	device-name "ulpt[0-9]+";
+	# 当设备拔除时，删除相应的连接
+	action "/bin/rm /dev/`/bin/ls -l /dev | /usr/bin/awk
+	 '/^l.*$device-name\$/{print \$9}'`";
+};
+\end{lstlisting}
+
+在上面的示例文件生效后，当EPSON Stylus CX3700联机时，devd服务进程就会根据配置文件指定的条件，创建一个指向自动分配给这个打印机的节点的名为/dev/epPRN的连接。对于 Brother FAX-2820，则创建/dev/brPRN的连接。
+
+这样，无论两台是单独联机还是同时联机，也不管两台打印机联机的先后次序，/dev/epPRN总是指向为EPSON Stylus CX3700创建的设备节点，而/dev/brPRN总是指向为Brother FAX-2820创建的设备节点。
+
+保存配置文件后，重新启动devd服务，配置就可以生效了。
+
+\begin{verbatim}
+#/etc/rc.d/devd start
+\end{verbatim}
+
+如果没有生效，再次前台运行调试模式的devd来查看有关信息排除错误。
+应用程序配置
+
+经过这样的设置，在CUPS配置时就不用为设备节点名称不固定而头疼了，配置EPSON Stylus CX3700时，打印机URI使用usb:/dev/epPRN，而Brother FAX-2820则使用usb:/dev/brPRN。其他热插拔设备应当可以参照上述方法设置。
