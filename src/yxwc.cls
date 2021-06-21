@@ -102,14 +102,6 @@
     \renewcommand{\footrulewidth}{0pt}
 }
 
-%\RequirePackage{titlesec}
-%\titleformat{\chapter}{\centering\zihao{1}}{\chaptertitle}{0pt}{}
-%\titleformat{\section}{\centering\zihao{3}}{\sectiontitle}{0pt}{\clearpage}
-%\renewpagestyle{plain}{
-    % \sethead[\zihao{6}\kaishu\sectiontitle][][\zihao{6}\yuesong\chaptertitle]{\zihao{6}\yuesong\chaptertitle}{}{\zihao{6}\kaishu\sectiontitle}
-    %\setfoot[\zihao{6}\thepage][][]{}{}{\zihao{6}\thepage}      %设置页脚，可以在页脚添加 \thepage  显示页数
-%}
-
 % 无标号脚注
 \RequirePackage[perpage,stable,marginal]{footmisc}
 \newcommand\blfootnote[1]{%
@@ -119,10 +111,14 @@
     \endgroup%
 }
 
-%\RequirePackage[colorlinks,linkcolor=black,anchorcolor=black,citecolor=black,CJKbookmarks=True]{hyperref}
+\usepackage{hyperref}
+\hypersetup{hidelinks,
+    colorlinks=true,
+    allcolors=black,
+    pdfstartview=Fit,
+    breaklinks=true
+}
 %\RequirePackage{graphicx}
-
-\RequirePackage{verse}
 
 \RequirePackage{amsfonts,amssymb}
 
