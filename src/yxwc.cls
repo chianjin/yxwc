@@ -1,4 +1,4 @@
-\ProvidesClass{yixuanwencao}[Yixuan Wencao]
+\ProvidesClass{yxwc}[Yixuan Wencao]
 \NeedsTeXFormat{LaTeX2e}
 
 \ProcessOptions\relax
@@ -22,21 +22,21 @@
 \setmainfont{Times New Roman}
 % 正文：思源宋体 Light 粗体：思源宋体 Medium
 \setCJKmainfont[
-    BoldFont=Source Han Serif SC Medium,
+    BoldFont=Source Han Serif SC,
     ItalicFont=FZKai-Z03
     ]
-    {Source Han Serif SC ExtraLight}
+    {Source Han Serif SC Light}
 \setCJKsansfont[
-    BoldFont=Source Han Sans SC Bold,
+    BoldFont=Source Han Sans SC,
     ]
-    {Source Han Sans SC ExtraLight}
+    {Source Han Sans SC Light}
 \setCJKmonofont{FZFangSong-Z02}
 
-\setCJKfamilyfont{zhsong}{Source Han Serif SC ExtraLight}
+\setCJKfamilyfont{zhsong}{Source Han Serif SC Light}
 \setCJKfamilyfont{zhxbs}{Source Han Serif SC Medium}
 \setCJKfamilyfont{zhdbs}{Source Han Serif SC Bold}
-\setCJKfamilyfont{zhhei}{Source Han Sans SC}
-\setCJKfamilyfont{zhdh}{Source Han Sans SC Bold}
+\setCJKfamilyfont{zhhei}{Source Han Sans SC Light}
+\setCJKfamilyfont{zhdh}{Source Han Sans SC}
 \setCJKfamilyfont{zhfs}{FZFangSong-Z02}
 \setCJKfamilyfont{zhkai}{FZKai-Z03}
 
@@ -64,15 +64,15 @@
 	chapter={
 		numbering=false,
 		format=\centering\zihao{3}\xbsong,
-        beforeskip=0pt,
-        afterskip=1.56em,
+        beforeskip=2\baselineskip,
+        afterskip=2\baselineskip,
 	    pagestyle=plain
 	},
     section={
 		numbering=false,
         format=\zihao{5}\heiti,
-        beforeskip=1.56em,
-        afterskip=0.78em,
+        %beforeskip=1.56em,
+        %afterskip=0.78em,
 	}
 }
 
@@ -103,7 +103,7 @@
 }
 
 % 无标号脚注
-\RequirePackage[perpage,stable,marginal]{footmisc}
+%\RequirePackage[perpage,stable,marginal]{footmisc}
 \newcommand\blfootnote[1]{%
     \begingroup%
     \renewcommand\thefootnote{}\footnote{#1}%

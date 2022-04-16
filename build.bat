@@ -2,7 +2,7 @@
 rem ------------------------------------------------
 rem ->> Source and dist file names
 rem ------------------------------------------------
-set PDFFileName=ÒËÐùÎÄÆH
+set PDFFileName=å®œè½©æ–‡è‰¸
 set TeXFileName=yxwc
 
 rem ------------------------------------------------
